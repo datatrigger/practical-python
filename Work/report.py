@@ -13,7 +13,8 @@ def read_portfolio(filename):
         rows = csv.reader(f)
         headers = next(rows)
         for row in rows:
-            t = {'name':row[0], 'shares':int(row[1]), 'price':float(row[2]) }
+            record = dict(zip(headers, row))
+            t = {'name':record['name'], 'shares':int(record['shares']), 'price':float(record['price']) }
             portfolio.append(t)
     return portfolio
 
@@ -32,6 +33,7 @@ def read_prices(filename):
     return prices
 
 pf = read_portfolio('Data/portfolio.csv')
+#pf = read_portfolio('Data/portfoliodate.csv')
 prices = read_prices('Data/prices.csv')
 
 # Cost

@@ -11,15 +11,16 @@ def portfolio_cost(filename):
 
     with open(path, 'rt') as f:
         rows = csv.reader(f)
-        next(rows)
-        for row in rows:
+        headers = next(rows)
+        for rowid, row in enumerate(rows):
+            record = dict(zip(headers, row))
             try:
                 #row = row.split(',')
-                nshares = int(row[1])
-                cost_share = float(row[2].strip())
+                nshares = int(record['shares'])
+                cost_share = float(record['price'].strip())
                 total = total + nshares*cost_share
             except ValueError:
-                print('Could not read the current line. Proceeding to read the next line.')
+                print(f'Row {rowid} : Could not convert {row} ')
     return round(total,2)
 
 if len(sys.argv) == 2:
