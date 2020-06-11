@@ -1,72 +1,67 @@
 # report.py
-#
-# Exercise 2.4
-# pcost.py
 
-import csv
+import fileparse
+import stock
+import tableformat
 
 def read_portfolio(filename):
-    '''Reads the portfolio and format it into a list of tuples'''
-    portfolio = []
-
-    with open(filename, 'rt') as f:
-        rows = csv.reader(f)
-        headers = next(rows)
-        for row in rows:
-            record = dict(zip(headers, row))
-            t = {'name':record['name'], 'shares':int(record['shares']), 'price':float(record['price']) }
-            portfolio.append(t)
-    return portfolio
+    '''
+    Read a stock portfolio file into a list of dictionaries with keys
+    name, shares, and price.
+    '''
+    with open(filename) as lines:
+        portdicts = fileparse.parse_csv(lines, select=['name','shares','price'], types=[str,int,float])
+        return [ stock.Stock(d['name'], d['shares'], d['price']) for d in portdicts]
 
 def read_prices(filename):
-    '''Reads the portfolio and format it into a list of tuples'''
-    prices = {}
+    '''
+    Read a CSV file of price data into a dict mapping names to prices.
+    '''
+    with open(filename) as lines:
+        return dict(fileparse.parse_csv(lines, types=[str,float], has_headers=False))
 
-    with open(filename, 'rt') as f:
-        rows = csv.reader(f)
-        #headers = next(rows)
-        for row in rows:
-            try:
-                prices[row[0]] = float(row[1])
-            except IndexError:
-                print('Error : empty line. Proceeding to read the next line.')
-    return prices
+def make_report_data(portfolio,prices):
+    '''
+    Make a list of (name, shares, price, change) tuples given a portfolio list
+    and prices dictionary.
+    '''
+    rows = []
+    for stock in portfolio:
+        current_price = prices[stock.name]
+        change = current_price - stock.price
+        summary = (stock.name, stock.shares, current_price, change)
+        rows.append(summary)
+    return rows
 
-pf = read_portfolio('Data/portfolio.csv')
-#pf = read_portfolio('Data/portfoliodate.csv')
-prices = read_prices('Data/prices.csv')
+def print_report(reportdata, formatter):
+    '''
+    Print a nicely formated table from a list of (name, shares, price, change) tuples.
+    '''
+    formatter.headings(['Name','Shares','Price','Change'])
+    for name, shares, price, change in reportdata:
+        rowdata = [ name, str(shares), f'{price:0.2f}', f'{change:0.2f}' ]
+        formatter.row(rowdata)
 
-# Cost
-cost = 0.0
-for s in pf:
-    cost += s['shares']*s['price']
+def portfolio_report(portfoliofile, pricefile, fmt = 'txt'):        
+    '''
+    Make a stock report given portfolio and price data files.
+    '''
+    # Read data files 
+    portfolio = read_portfolio(portfoliofile)
+    prices = read_prices(pricefile)
 
-# Value
-value = 0.0
-for s in pf:
-    value += s['shares']*prices[s['name']]
+    # Create the report data
+    report = make_report_data(portfolio, prices)
 
-result = round(value - cost,2)
-print('Cost :', cost, '\nValue :', value, '\nResult :', result)
+    # Print it out
+    formatter = tableformat.create_formatter(fmt)
+    print_report(report, formatter)
 
-def make_report(portfolio, prices):
-    report = []
-    for s in portfolio:
-        #t = (s['name'], s['shares'], prices[s['name']], prices[s['name']] - s['price'] )
-        t = (s['name'], s['shares'], '$'+str(round(prices[s['name']],2)), prices[s['name']] - s['price'] )
-        report.append(t)
-    return(report)
+def main(args):
+    if len(args) != 4:
+        raise SystemExit('Usage: %s portfile pricefile' % args[0])
+    portfolio_report(args[1], args[2], args[3])
 
-report = make_report(pf, prices)
-headers = ('Name', 'Shares', 'Price', 'Change')
-
-print('\n Full report of the portfolio : \n')
-#print('%10s %10s %10s %10s' % headers)
-print(f'{headers[0]:>10s} {headers[1]:>10s} {headers[2]:>10s} {headers[3]:>10s}')
-print(('-' * 10 + ' ') * len(headers))
-for name, shares, price, change in report:
-        #print(f'{name:>10s} {shares:>10d} {price:>10.2f} {change:>10.2f}')
-        print(f'{name:>10s} {shares:>10d} {price:>10s} {change:>10.2f}')
-
-
-
+if __name__ == '__main__':
+    import sys
+    main(sys.argv)
