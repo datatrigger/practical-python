@@ -61,7 +61,7 @@ def create_formatter( fmt = 'txt '):
     elif fmt == 'html':
         formatter = HTMLTableFormatter()
     else:
-        raise RuntimeError(f'Unknown format {fmt}')
+        raise FormatError(f'Unknown table format {fmt}')
 
     return formatter
 
@@ -73,3 +73,6 @@ def print_table(data, attributes = ['Name','Shares','Price','Change'], formatter
     for d in data:
         rowdata = [ str(getattr(d, attribute)) for attribute in attributes ]
         formatter.row(rowdata)
+
+class FormatError(Exception):
+    pass

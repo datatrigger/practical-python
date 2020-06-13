@@ -1,7 +1,8 @@
 # report.py
 
 import fileparse
-import stock
+from stock import Stock
+from portfolio import Portfolio
 import tableformat
 
 def read_portfolio(filename):
@@ -11,7 +12,8 @@ def read_portfolio(filename):
     '''
     with open(filename) as lines:
         portdicts = fileparse.parse_csv(lines, select=['name','shares','price'], types=[str,int,float])
-        return [ stock.Stock(d['name'], d['shares'], d['price']) for d in portdicts]
+        portfolio = [ Stock(d['name'], d['shares'], d['price']) for d in portdicts ]
+        return Portfolio(portfolio)
 
 def read_prices(filename):
     '''
